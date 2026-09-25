@@ -1,27 +1,46 @@
 /*
  * luci-c2 — monospace command-and-control theme for LuCI.
  *
- * phase_00_bootstrap: design tokens and a minimal base only.
+ * phase_00_bootstrap: design tokens and a minimal mobile-first base only.
  * Component, navigation and dashboard styling land in later phases (see SPEC.md §13).
+ *
+ * Duotone: one background tone + one foreground tone. Every other value is a tint
+ * of the foreground over the background, so the palette stays two colors. Light
+ * mode inverts the two tones; derive new tokens from them so both modes follow.
  */
 
 :root {
-	--c2-bg: #0a0e0a;
-	--c2-bg-panel: #0f140f;
-	--c2-bg-raised: #141a14;
-	--c2-fg: #c8d3c8;
-	--c2-fg-muted: #5a6b5a;
-	--c2-accent: #33ff66;
-	--c2-accent-dim: #1f8c3a;
-	--c2-info: #33ccff;
-	--c2-warn: #ffb000;
-	--c2-crit: #ff3b30;
-	--c2-border: #1f2a1f;
+	/* the two tones — dark mode is the default */
+	--c2-bg: #0b0d0c;
+	--c2-fg: #a8b5a8;
+	color-scheme: dark;
+
+	/* foreground tints over the background — still duotone, and they follow the tones */
+	--c2-fg-dim: color-mix(in srgb, var(--c2-fg) 45%, var(--c2-bg));
+	--c2-fg-muted: color-mix(in srgb, var(--c2-fg) 30%, var(--c2-bg));
+	--c2-border: color-mix(in srgb, var(--c2-fg) 22%, var(--c2-bg));
+	--c2-fill: color-mix(in srgb, var(--c2-fg) 6%, var(--c2-bg));
 
 	--c2-font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-	--c2-radius: 2px;
+	--c2-radius: 0;
 	--c2-line: 1px solid var(--c2-border);
+}
+
+/* light mode — invert the duotone: light background, dark foreground */
+@media (prefers-color-scheme: light) {
+	:root:not([data-c2-theme="dark"]) {
+		--c2-bg: #e9ece9;
+		--c2-fg: #202720;
+		color-scheme: light;
+	}
+}
+
+/* explicit override for a UI toggle; wins over the OS preference */
+:root[data-c2-theme="light"] {
+	--c2-bg: #e9ece9;
+	--c2-fg: #202720;
+	color-scheme: light;
 }
 
 html {
@@ -40,31 +59,33 @@ body {
 }
 
 a {
-	color: var(--c2-accent);
-	text-decoration: none;
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 
 a:hover,
 a:focus {
+	background: var(--c2-fg);
 	color: var(--c2-bg);
-	background: var(--c2-accent);
+	text-decoration: none;
 }
 
 ::selection {
-	background: var(--c2-accent);
+	background: var(--c2-fg);
 	color: var(--c2-bg);
 }
 
 :focus-visible {
-	outline: 1px solid var(--c2-accent);
-	outline-offset: 1px;
+	outline: 1px solid var(--c2-fg);
+	outline-offset: 2px;
 }
 
-#menubar,
-#mainmenu,
-#maincontent {
-	border: var(--c2-line);
-	background: var(--c2-bg-panel);
+/* mobile-first: base is a single column; add width-based enhancements only */
+@media (min-width: 48em) {
+	body {
+		/* room for the two-column chrome once a viewport can hold it */
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {

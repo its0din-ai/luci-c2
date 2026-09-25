@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>luci-c2 — mockup preview</title>
+<link rel="icon" type="image/svg+xml" href="../htdocs/luci-static/c2/favicon.svg" />
+<!-- design tokens + base come from the real theme -->
+<link rel="stylesheet" href="../htdocs/luci-static/c2/cascade.css" />
+<!-- mockup-only layout/skin; not shipped -->
+<link rel="stylesheet" href="mockup.css" />
+</head>
+<body class="c2-mock">
+
+<div class="mock-menubar">
+	<span class="brand">
+		<svg class="brand-mark" width="18" height="18" viewBox="0 0 64 64" aria-hidden="true">
+			<rect x="4" y="4" width="56" height="56" fill="none" stroke="currentColor" stroke-width="2"/>
+			<path d="M14 22 l8 10 -8 10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square"/>
+			<rect x="30" y="36" width="20" height="4" fill="currentColor"/>
+		</svg>
+		rtr-01
+	</span>
+	<span class="spacer"></span>
+	<span class="prompt">root@router:~#</span>
+	<span class="mock-indicators">
+		<span class="mock-indicator"><span class="dot"></span>link up</span>
+		<span class="mock-indicator hollow"><span class="dot"></span>load 1.8</span>
+		<span class="mock-indicator hollow"><span class="dot"></span>1 alert</span>
+	</span>
+	<span class="mock-clock" id="clock">--:--:--Z</span>
+	<button class="mock-btn ghost" id="theme-toggle" type="button" aria-pressed="false">mode: dark</button>
+</div>
+
+<div class="mock-container">
+	<nav class="mock-mainmenu" aria-label="Navigation">
+		<div class="section">Status</div>
+		<a href="#" class="active">Overview</a>
+		<a href="#">Routing</a>
+		<a href="#">System Log</a>
+		<a href="#">Realtime Graphs</a>
+
+		<div class="section">System</div>
+		<a href="#">System</a>
+		<a href="#">Administration</a>
+		<a href="#">Software</a>
+		<a href="#">Startup</a>
+
+		<div class="section">Network</div>
+		<a href="#">Interfaces</a>
+		<a href="#">Wireless</a>
+		<a href="#">Firewall</a>
+		<a href="#">DHCP and DNS</a>
+	</nav>
+
+	<main class="mock-content" id="content">
+		<div class="mock-breadcrumb">admin / status / overview</div>
+		<h1 class="mock-title">System Overview</h1>
+		<p class="mock-subtitle">node rtr-01 &middot; OpenWrt 24.10 &middot; target mediatek/filogic</p>
+
+		<div class="mock-alert crit">
+			<span class="tag">alert</span>
+			<p>Interface <b>wan</b> is down. Last carrier loss 00:04:12 ago.</p>
+		</div>
+
+		<div class="mock-tabs">
+			<a href="#" class="active">Overview</a>
+			<a href="#">Firewall</a>
+			<a href="#">Routes</a>
+			<a href="#">DHCP Leases</a>
+		</div>
+
+		<section class="mock-panel">
+			<h3>System</h3>
+			<div class="mock-panel-body">
+				<div class="mock-grid">
+					<div class="mock-kv"><span class="k">hostname</span><span class="v">rtr-01</span></div>
+					<div class="mock-kv"><span class="k">model</span><span class="v">GL-MT3000</span></div>
+					<div class="mock-kv"><span class="k">uptime</span><span class="v">3d 04:17:52</span></div>
+					<div class="mock-kv"><span class="k">kernel</span><span class="v">6.6.63</span></div>
+					<div class="mock-kv"><span class="k">local time</span><span class="v">2026-09-26 07:02:11 UTC</span></div>
+					<div class="mock-kv"><span class="k">load average</span><span class="v">1.82 / 1.44 / 1.10</span></div>
+				</div>
+			</div>
+		</section>
+
+		<section class="mock-panel">
+			<h3>Resources</h3>
+			<div class="mock-panel-body">
+				<div class="mock-form-row">
+					<label>CPU</label>
+					<div class="mock-bar" style="flex:1"><span style="width:68%"></span></div>
+					<span class="v" style="width:44px;text-align:right">68%</span>
+				</div>
+				<div class="mock-form-row">
+					<label>Memory</label>
+					<div class="mock-bar" style="flex:1"><span style="width:41%"></span></div>
+					<span class="v" style="width:44px;text-align:right">41%</span>
+				</div>
+				<div class="mock-form-row">
+					<label>Storage</label>
+					<div class="mock-bar striped" style="flex:1"><span style="width:87%"></span></div>
+					<span class="v" style="width:44px;text-align:right">87%</span>
+				</div>
+			</div>
+		</section>
+
+		<section class="mock-panel">
+			<h3>Interfaces</h3>
+			<div class="mock-scroll">
+				<table class="mock-table">
+					<thead>
+						<tr>
+							<th>interface</th><th>state</th><th>proto</th><th>address</th>
+							<th class="num">rx</th><th class="num">tx</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>br-lan</td><td><span class="mock-badge">up</span></td><td>static</td>
+							<td>192.168.1.1/24</td><td class="num">1.24 GiB</td><td class="num">803 MiB</td>
+						</tr>
+						<tr>
+							<td>wan</td><td><span class="mock-badge dim">down</span></td><td>dhcp</td>
+							<td>—</td><td class="num">0 B</td><td class="num">0 B</td>
+						</tr>
+						<tr>
+							<td>wg0</td><td><span class="mock-badge">up</span></td><td>wireguard</td>
+							<td>10.7.0.2/24</td><td class="num">412 MiB</td><td class="num">96 MiB</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<section class="mock-panel">
+			<h3>Execute Command</h3>
+			<div class="mock-panel-body">
+				<div class="mock-form-row">
+					<label for="cmd">command</label>
+					<span class="mock-input"><input id="cmd" type="text" placeholder="ubus call system board" /></span>
+					<button class="mock-btn" type="button">run</button>
+				</div>
+				<div class="mock-form-row">
+					<label for="target">target</label>
+					<span class="mock-input">
+						<select id="target">
+							<option>rtr-01</option>
+							<option>rtr-02</option>
+							<option>edge-fra</option>
+						</select>
+					</span>
+					<button class="mock-btn ghost" type="button">halt</button>
+				</div>
+			</div>
+		</section>
+
+		<section class="mock-panel">
+			<h3>System Log</h3>
+			<div class="mock-panel-body">
+				<div class="mock-console">
+					<div class="line"><span class="ts">07:01:58</span> <span class="lvl">[info]</span> <span class="msg">netifd: br-lan: carrier on</span></div>
+					<div class="line"><span class="ts">07:01:59</span> <span class="lvl">[info]</span> <span class="msg">dnsmasq: started, version 2.90 cachesize 1000</span></div>
+					<div class="line"><span class="ts">07:02:00</span> <span class="lvl">[warn]</span> <span class="msg">netifd: wan: link down, dhcp lost</span></div>
+					<div class="line crit"><span class="ts">07:02:01</span> <span class="lvl">[fail]</span> <span class="msg">firewall: rule 14 denied tcp 10.7.0.9:44322 -&gt; 45.77.1.4:22</span></div>
+					<div class="line"><span class="ts">07:02:03</span> <span class="lvl">[ ok ]</span> <span class="msg">wg0: handshake peer e3f1...a90c (12s ago)</span></div>
+					<div class="line"><span class="ts">07:02:04</span> <span class="lvl">[info]</span> <span class="msg">luci: session opened for root from 192.168.1.42</span></div>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<footer class="mock-footer">Powered by LuCI &middot; mockup preview (static prototype, not the live runtime)</footer>
+</div>
+
+<script src="mockup.js"></script>
+</body>
+</html>

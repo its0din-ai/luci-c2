@@ -51,6 +51,9 @@ Local, always-available checks:
 - Makefile uses the standalone external-theme pattern `include $(TOPDIR)/feeds/luci/luci.mk` (as `luci-theme-argon` does), not `../../luci.mk`, because this repo root is the package root. `PKG_NAME:=luci-theme-c2` is explicit so the package name does not fall back to the directory name (`luci-c2`).
 - Tracks are all Apache-2.0; `header.ut`/`footer.ut`/`menu-c2.js` are adapted from `luci-theme-openwrt-2020` (© Jo-Philipp Wich) with attribution retained, keeping template escaping intact (mitigates `t_01_template_output_xss`).
 - `CONFIG_LUCI_CSSTIDY:=` disables csstidy so the authored terminal CSS is served unchanged.
+- Design revised (user request): strict **duotone** only — one background tone + one foreground tone, all other tokens tinted via `color-mix`. No second hue; status shown by shape/border-style/weight/labels; no glow, neon, blink, or scanlines. **Mobile-first** CSS (base = smallest viewport; enhancements at `48em`/`64em`). Reflected in `SPEC.md` §2 and `preview/`.
+- **Light mode** (user request): inverted duotone — dark `#0b0d0c`/`#a8b5a8`, light `#e9ece9`/`#202720`. Only `--c2-bg`/`--c2-fg` switch; derived tokens follow. Auto via `prefers-color-scheme`, overridable by `[data-c2-theme]`; `color-scheme` set per mode. Assets use `currentColor` (logo/spinner updated). Preview has a toggle button.
+- **Favicon** (user request): `htdocs/luci-static/c2/favicon.svg`, an SVG icon with an embedded `prefers-color-scheme` style so it adapts to the browser chrome. `header.ut` and the preview link it; `logo.svg` stays for branding.
 
 ## Out of scope
 

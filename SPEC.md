@@ -25,11 +25,16 @@ Where a rule below restates AGENTIC.md, AGENTIC.md wins on conflict.
 
 ### 2.1 Design language
 
-- Terminal/console aesthetic: sharp 1px borders, square corners (radius `0–2px`), no soft shadows.
-- Every surface is a "panel"; every list is a "feed"; every form is a "command prompt".
-- Status-forward: persistent status strip (node, theme, link state, UTC clock).
+- **Duotone only**: one dark background tone + one foreground tone. There is no second hue and no
+  color-coded status — every other value is a tint of the foreground over the background.
+- **No blinding styles**: no glow, no neon, no blinking, no scanlines, no gradients beyond a single
+  tone-on-tone stripe. Quiet, low-glare surfaces.
+- Terminal/console structure: sharp 1px borders, square corners (radius `0`), no soft shadows.
+- State is expressed by **shape, border style, weight and text labels** (`[ ok ]`, `[warn]`, `[fail]`,
+  solid vs dashed badge), never by hue.
+- Every surface is a "panel"; every form is a "command prompt" (`>` prefix).
+- Status-forward: persistent status strip (node, link state, UTC clock).
 - Information density over whitespace; tabular alignment via monospace metrics.
-- Subtle CRT motifs (scanline/grid) allowed only if `prefers-reduced-motion`/contrast permits.
 
 ### 2.2 Typography
 
@@ -39,25 +44,44 @@ Where a rule below restates AGENTIC.md, AGENTIC.md wins on conflict.
 - Base 14px / line-height 1.5 / letter-spacing 0.02em. Headings uppercase, tracked.
 - No icon fonts — inline `<svg>` only.
 
-### 2.3 Color tokens (CSS custom properties)
+### 2.3 Duotone tokens (CSS custom properties)
 
-| Token | Role | Value (starting point) |
+Exactly two source tones; all other tokens are tints composed from them (still duotone).
+
+| Token | Role | Value |
 |---|---|---|
-| `--c2-bg` | page background | `#0a0e0a` |
-| `--c2-bg-panel` | panels/cards | `#0f140f` |
-| `--c2-bg-raised` | hover/active | `#141a14` |
-| `--c2-fg` | primary text | `#c8d3c8` |
-| `--c2-fg-muted` | secondary text | `#5a6b5a` |
-| `--c2-accent` | primary (phosphor) | `#33ff66` |
-| `--c2-accent-dim` | accent hover/border | `#1f8c3a` |
-| `--c2-info` | informational | `#33ccff` |
-| `--c2-warn` | warning | `#ffb000` |
-| `--c2-crit` | error/danger | `#ff3b30` |
-| `--c2-border` | 1px borders | `#1f2a1f` |
-| `--c2-selection` | text selection | `#33ff66` / `#0a0e0a` |
+| `--c2-bg` | the dark background tone | `#0b0d0c` |
+| `--c2-fg` | the foreground tone | `#a8b5a8` |
+| `--c2-fg-dim` | secondary text | `color-mix(in srgb, var(--c2-fg) 45%, var(--c2-bg))` |
+| `--c2-fg-muted` | tertiary text | `color-mix(in srgb, var(--c2-fg) 30%, var(--c2-bg))` |
+| `--c2-border` | 1px borders | `color-mix(in srgb, var(--c2-fg) 22%, var(--c2-bg))` |
+| `--c2-fill` | hover/active fill | `color-mix(in srgb, var(--c2-fg) 6%, var(--c2-bg))` |
 
-- All colors defined once as `:root` tokens; components reference tokens only, never raw hex.
-- Contrast: body text and interactive text must meet WCAG AA against their background.
+- Two tones only. New tokens must be derived from `--c2-bg`/`--c2-fg`, never a new hue.
+- Interaction/selection inverts the two tones (foreground background, background text) — no accent color.
+- No `box-shadow` glows, no saturation over ~10%, no pure white, no pure black.
+- Contrast: body text and interactive text must meet WCAG AA against the background.
+
+**Light mode (inverted duotone).** Light mode simply swaps the two tones: light background,
+dark foreground. Only `--c2-bg` and `--c2-fg` change; every derived token follows automatically.
+
+| Mode | `--c2-bg` | `--c2-fg` |
+|---|---|---|
+| dark (default) | `#0b0d0c` | `#a8b5a8` |
+| light | `#e9ece9` | `#202720` |
+
+Precedence: an explicit `[data-c2-theme]` attribute wins; otherwise `prefers-color-scheme` decides.
+
+```css
+@media (prefers-color-scheme: light) {
+	:root:not([data-c2-theme="dark"]) { /* light tones */ }
+}
+:root[data-c2-theme="light"] { /* light tones */ }
+```
+
+- Set `color-scheme` on the root so native controls and scrollbars follow the mode.
+- Both modes must pass the same AA contrast bar; keep both tones within the same hue family.
+- No asset may hardcode a mode-specific color — use `currentColor` or a token.
 
 ### 2.4 Layout & components to restyle
 
@@ -68,11 +92,15 @@ Where a rule below restates AGENTIC.md, AGENTIC.md wins on conflict.
 - LuCI system pages: status/overview, graphs, `logread`/console output, package lists.
 - Prompt motif: primary inputs prefixed with `>`; monospace alignment of columns.
 
-### 2.5 Accessibility & motion
+### 2.5 Mobile-first, accessibility & motion
 
+- **Mobile-first**: author base rules for the smallest viewport first; add enhancements only inside
+  `@media (min-width: 48em)` (two-column chrome) and `@media (min-width: 64em)` (wider grids).
+- Small viewports: single column; navigation and tab strips scroll horizontally; tables scroll in a
+  wrapper; form rows stack. No horizontal page overflow at 320px.
 - Visible keyboard focus on every interactive element; no focus suppression without replacement.
-- Respect `prefers-reduced-motion` and `prefers-contrast`; animations are opt-in and subtle.
-- Responsive down to small router-admin viewports; no horizontal overflow at 360px.
+- Respect `prefers-reduced-motion` and `prefers-contrast`; no animation is required for the design to
+  read. No blinking cursor, no pulsing glows.
 
 ## 3. LuCI integration (accurate package layout)
 
@@ -85,6 +113,7 @@ luci-c2/
 │   ├── c2/
 │   │   ├── cascade.css                           # the theme
 │   │   ├── logo.svg
+│   │   ├── favicon.svg                           # adaptive (dark/light) tab icon
 │   │   ├── spinner.svg
 │   │   └── *-*.woff2                             # self-hosted fonts
 │   └── resources/
