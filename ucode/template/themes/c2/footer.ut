@@ -1,0 +1,18 @@
+{#
+ Copyright 2020 Jo-Philipp Wich <jo@mein.io>
+ Licensed to the public under the Apache License 2.0.
+
+ Adapted for luci-c2. Derived from luci-theme-openwrt-2020.
+-#}
+
+</div>
+</div>
+
+<p class="luci">
+	Powered by {{ version.luciname }} ({{ version.luciversion }})
+</p>
+
+<script>L.require('menu-c2')</script>
+
+</body>
+</html>

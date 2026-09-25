@@ -1,0 +1,75 @@
+/*
+ * luci-c2 — monospace command-and-control theme for LuCI.
+ *
+ * phase_00_bootstrap: design tokens and a minimal base only.
+ * Component, navigation and dashboard styling land in later phases (see SPEC.md §13).
+ */
+
+:root {
+	--c2-bg: #0a0e0a;
+	--c2-bg-panel: #0f140f;
+	--c2-bg-raised: #141a14;
+	--c2-fg: #c8d3c8;
+	--c2-fg-muted: #5a6b5a;
+	--c2-accent: #33ff66;
+	--c2-accent-dim: #1f8c3a;
+	--c2-info: #33ccff;
+	--c2-warn: #ffb000;
+	--c2-crit: #ff3b30;
+	--c2-border: #1f2a1f;
+
+	--c2-font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+	--c2-radius: 2px;
+	--c2-line: 1px solid var(--c2-border);
+}
+
+html {
+	background: var(--c2-bg);
+	color: var(--c2-fg);
+	font-family: var(--c2-font-mono);
+	font-size: 14px;
+	line-height: 1.5;
+	letter-spacing: 0.02em;
+}
+
+body {
+	margin: 0;
+	background: var(--c2-bg);
+	color: var(--c2-fg);
+}
+
+a {
+	color: var(--c2-accent);
+	text-decoration: none;
+}
+
+a:hover,
+a:focus {
+	color: var(--c2-bg);
+	background: var(--c2-accent);
+}
+
+::selection {
+	background: var(--c2-accent);
+	color: var(--c2-bg);
+}
+
+:focus-visible {
+	outline: 1px solid var(--c2-accent);
+	outline-offset: 1px;
+}
+
+#menubar,
+#mainmenu,
+#maincontent {
+	border: var(--c2-line);
+	background: var(--c2-bg-panel);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		animation: none !important;
+		transition: none !important;
+	}
+}

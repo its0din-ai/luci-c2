@@ -96,8 +96,10 @@ luci-c2/
     └── footer.ut
 ```
 
-- **Makefile**: `LUCI_TITLE:=C2 Theme`, `LUCI_DEPENDS:=+luci-base`, `PKG_LICENSE`, a `postrm`
-  that deletes `luci.themes.C2` and commits `uci`, then `include ../../luci.mk`.
+- **Makefile**: standalone external-theme pattern (as used by `luci-theme-argon`):
+  `PKG_NAME:=luci-theme-c2`, `LUCI_TITLE`, `LUCI_DEPENDS:=+luci-base`, `PKG_LICENSE`, a `postrm`
+  that deletes `luci.themes.C2` and commits `uci`, then `include $(TOPDIR)/feeds/luci/luci.mk`,
+  which installs the `htdocs/`, `root/` and `ucode/` trees.
 - **UCI defaults** `30_luci-theme-c2`: idempotent; sets `luci.themes.C2=/luci-static/c2` and
   selects `luci.main.mediaurlbase`; no user input.
 - **Templates** `header.ut`/`footer.ut`: override the base theme's chrome; escape all variables
