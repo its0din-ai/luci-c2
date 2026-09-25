@@ -1,0 +1,48 @@
+# secrets — never commit, regardless of project language
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.crt
+secrets/
+
+# common dependency / build dirs across languages
+node_modules/
+vendor/
+target/
+dist/
+build/
+bin/
+obj/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# openwrt sdk / buildroot artifacts
+*.ipk
+.config
+.config.old
+tmp/
+dl/
+feeds/
+staging_dir/
+build_dir/
+logs/
+.ccache/
+
+# local data
+*.db
+*.sqlite
+*.sqlite3
+/data/
+
+# logs
+*.log
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
