@@ -14,6 +14,8 @@ PKG_VERSION:=0.1.0
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=luci-c2 maintainers <maintainers@example.invalid>
+# Architecture-independent: one ipk/apk works on every target (GitHub feed friendly).
+PKGARCH:=all
 
 # Serve cascade.css as authored; skip csstidy so the terminal layout is predictable.
 CONFIG_LUCI_CSSTIDY:=

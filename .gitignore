@@ -42,6 +42,10 @@ logs/
 # logs
 *.log
 
+# local-only dev dirs — not shipped (see SPEC.md §3/§10)
+llm/
+preview/
+
 # os / editor
 .DS_Store
 .idea/
