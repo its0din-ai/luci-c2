@@ -1,0 +1,36 @@
+name: Compile check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    name: Compile on ${{ matrix.openwrt }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - openwrt: "23.05.5"
+            sdk_base_url: https://downloads.openwrt.org/releases/23.05.5/targets/x86/64
+            sdk_pattern: openwrt-sdk-23.05.5-x86-64_.*Linux-x86_64\.tar\.(xz|zst)
+          - openwrt: "24.10.0"
+            sdk_base_url: https://downloads.openwrt.org/releases/24.10.0/targets/x86/64
+            sdk_pattern: openwrt-sdk-24.10.0-x86-64_.*Linux-x86_64\.tar\.(xz|zst)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build package
+        uses: ./.github/actions/build-package
+        with:
+          sdk_base_url: ${{ matrix.sdk_base_url }}
+          sdk_pattern: ${{ matrix.sdk_pattern }}
+          version: "0.0.0"

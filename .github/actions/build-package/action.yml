@@ -1,0 +1,106 @@
+name: Build luci-theme-c2
+description: Compile luci-theme-c2 with a given OpenWrt SDK
+
+inputs:
+  sdk_base_url:
+    description: OpenWrt SDK base URL (target directory containing sha256sums)
+    required: true
+  sdk_pattern:
+    description: Regex matching the SDK archive name in sha256sums
+    required: true
+  version:
+    description: PKG_VERSION to inject into the Makefile
+    required: false
+    default: "0.0.0"
+
+runs:
+  using: composite
+  steps:
+    - name: Install build dependencies
+      shell: bash
+      run: |
+        sudo -E apt-get update
+        sudo -E apt-get install -y --no-install-recommends \
+          build-essential bison curl file flex gawk gettext git \
+          libncurses-dev libssl-dev python3 python3-setuptools python3-venv \
+          rsync unzip wget xz-utils zlib1g-dev zstd
+
+    - name: Resolve OpenWrt SDK
+      id: sdk
+      shell: bash
+      env:
+        SDK_BASE_URL: ${{ inputs.sdk_base_url }}
+        SDK_PATTERN: ${{ inputs.sdk_pattern }}
+      run: |
+        line="$(curl -fsSL "${SDK_BASE_URL}/sha256sums" | grep -E "[[:space:]]+\*?${SDK_PATTERN}$" | head -n1)"
+        if [ -z "${line}" ]; then
+          echo "::error::No SDK matching '${SDK_PATTERN}' at ${SDK_BASE_URL}."
+          exit 1
+        fi
+        file="$(printf '%s\n' "${line}" | awk '{print $2}' | sed 's/^\*//')"
+        sha="$(printf '%s\n' "${line}" | awk '{print $1}')"
+        echo "file=${file}" >> "${GITHUB_OUTPUT}"
+        echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
+        echo "url=${SDK_BASE_URL}/${file}" >> "${GITHUB_OUTPUT}"
+
+    - name: Cache SDK archive
+      uses: actions/cache@v4
+      with:
+        path: .cache/openwrt-sdk/${{ steps.sdk.outputs.file }}
+        key: openwrt-sdk-${{ steps.sdk.outputs.file }}-${{ steps.sdk.outputs.sha }}
+
+    - name: Download and extract SDK
+      shell: bash
+      env:
+        SDK_FILE: ${{ steps.sdk.outputs.file }}
+        SDK_SHA: ${{ steps.sdk.outputs.sha }}
+        SDK_URL: ${{ steps.sdk.outputs.url }}
+      run: |
+        mkdir -p .cache/openwrt-sdk sdk
+        if [ ! -f ".cache/openwrt-sdk/${SDK_FILE}" ]; then
+          curl -fL "${SDK_URL}" -o ".cache/openwrt-sdk/${SDK_FILE}"
+        fi
+        printf '%s  %s\n' "${SDK_SHA}" ".cache/openwrt-sdk/${SDK_FILE}" | sha256sum -c -
+        case "${SDK_FILE}" in
+          *.tar.zst) tar --zstd -xf ".cache/openwrt-sdk/${SDK_FILE}" -C sdk --strip-components=1 ;;
+          *.tar.xz)  tar -xJf  ".cache/openwrt-sdk/${SDK_FILE}" -C sdk --strip-components=1 ;;
+          *) echo "::error::Unsupported SDK archive: ${SDK_FILE}"; exit 1 ;;
+        esac
+
+    - name: Prepare OpenWrt feeds
+      shell: bash
+      run: |
+        cd sdk
+        cp feeds.conf.default feeds.conf
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: Stage this package
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        mkdir -p sdk/package
+        rsync -a --delete \
+          --exclude='.git' --exclude='sdk' --exclude='llm' --exclude='preview' \
+          ./ sdk/package/luci-theme-c2/
+        sed -i -E "s/^(PKG_VERSION):=.*/\1:=${VERSION}/" sdk/package/luci-theme-c2/Makefile
+        sed -i -E "s/^(PKG_RELEASE):=.*/\1:=1/" sdk/package/luci-theme-c2/Makefile
+
+    - name: Configure
+      shell: bash
+      run: |
+        cd sdk
+        cat > .config <<'EOF'
+        CONFIG_ALL=n
+        CONFIG_ALL_KMODS=n
+        CONFIG_ALL_NONSHARED=n
+        CONFIG_AUTOREMOVE=n
+        CONFIG_PACKAGE_luci-theme-c2=m
+        EOF
+        sed -i 's/^[[:space:]]*//' .config
+        make defconfig
+
+    - name: Compile
+      shell: bash
+      run: cd sdk && make package/luci-theme-c2/compile -j"$(nproc)" V=s

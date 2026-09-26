@@ -16,7 +16,19 @@ Duotone, mobile-first, with automatic light/dark mode.
   ucode (OpenWrt 21.02 and newer).
 - A modern browser. The theme uses CSS `color-mix()` and `prefers-color-scheme` (Chrome/Edge 111+,
   Firefox 113+, Safari 16.2+).
-- The package is architecture-independent (`PKGARCH:=all`).
+- The package is architecture-independent (`PKGARCH:=all`), so one artifact serves every target.
+
+### Supported versions
+
+| OpenWrt | Package manager | Artifact | Built / checked with |
+|---|---|---|---|
+| 23.05.x (e.g. `23.05.5`, r24106) | opkg | `luci-theme-c2_*_all.ipk` | 23.05.5 SDK (release) |
+| 24.10 (opkg) | opkg | same `all` `.ipk` | 24.10.0 SDK (compile check) |
+| 25.x / main (apk) | apk | `luci-theme-c2-*.apk` | snapshot SDK (best effort) |
+
+The `.ipk` is built against the **oldest supported** release (23.05.5) and, because it is `all`, also
+installs on newer opkg-based releases. CI compile-checks the source against 23.05.5 and 24.10.0; the
+apk is built from the snapshot SDK. Pick the artifact that matches `command -v apk`.
 
 ## Install
 

@@ -39,88 +39,12 @@ jobs:
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
           echo "Building version: ${version}"
 
-      - name: Install build dependencies
-        run: |
-          sudo -E apt-get update
-          sudo -E apt-get install -y --no-install-recommends \
-            build-essential bison curl file flex gawk gettext git \
-            libncurses-dev libssl-dev python3 python3-setuptools python3-venv \
-            rsync unzip wget xz-utils zlib1g-dev zstd
-
-      - name: Resolve OpenWrt SDK
-        id: sdk
-        env:
-          SDK_BASE_URL: https://downloads.openwrt.org/releases/24.10.0/targets/x86/64
-          SDK_PATTERN: openwrt-sdk-24.10.0-x86-64_.*Linux-x86_64\.tar\.(xz|zst)
-        run: |
-          line="$(curl -fsSL "${SDK_BASE_URL}/sha256sums" | grep -E "[[:space:]]+\*?${SDK_PATTERN}$" | head -n1)"
-          if [ -z "${line}" ]; then
-            echo "::error::No SDK matching '${SDK_PATTERN}' at ${SDK_BASE_URL}."
-            exit 1
-          fi
-          file="$(printf '%s\n' "${line}" | awk '{print $2}' | sed 's/^\*//')"
-          sha="$(printf '%s\n' "${line}" | awk '{print $1}')"
-          echo "file=${file}" >> "${GITHUB_OUTPUT}"
-          echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
-          echo "cache_key=openwrt-sdk-ipk-${sha}" >> "${GITHUB_OUTPUT}"
-
-      - name: Cache SDK archive
-        uses: actions/cache@v4
+      - name: Build package (OpenWrt 23.05.5)
+        uses: ./.github/actions/build-package
         with:
-          path: .cache/openwrt-sdk/${{ steps.sdk.outputs.file }}
-          key: ${{ steps.sdk.outputs.cache_key }}
-
-      - name: Download and extract SDK
-        env:
-          SDK_FILE: ${{ steps.sdk.outputs.file }}
-          SDK_SHA: ${{ steps.sdk.outputs.sha }}
-        run: |
-          mkdir -p .cache/openwrt-sdk sdk
-          if [ ! -f ".cache/openwrt-sdk/${SDK_FILE}" ]; then
-            curl -fL "https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/${SDK_FILE}" \
-              -o ".cache/openwrt-sdk/${SDK_FILE}"
-          fi
-          printf '%s  %s\n' "${SDK_SHA}" ".cache/openwrt-sdk/${SDK_FILE}" | sha256sum -c -
-          case "${SDK_FILE}" in
-            *.tar.zst) tar --zstd -xf ".cache/openwrt-sdk/${SDK_FILE}" -C sdk --strip-components=1 ;;
-            *.tar.xz)  tar -xJf  ".cache/openwrt-sdk/${SDK_FILE}" -C sdk --strip-components=1 ;;
-            *) echo "::error::Unsupported SDK archive: ${SDK_FILE}"; exit 1 ;;
-          esac
-
-      - name: Prepare OpenWrt feeds
-        working-directory: sdk
-        run: |
-          cp feeds.conf.default feeds.conf
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
-      - name: Stage this package
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          mkdir -p sdk/package
-          rsync -a --delete \
-            --exclude='.git' --exclude='sdk' --exclude='llm' --exclude='preview' \
-            ./ sdk/package/luci-theme-c2/
-          sed -i -E "s/^(PKG_VERSION):=.*/\1:=${VERSION}/" sdk/package/luci-theme-c2/Makefile
-          sed -i -E "s/^(PKG_RELEASE):=.*/\1:=1/" sdk/package/luci-theme-c2/Makefile
-
-      - name: Configure
-        working-directory: sdk
-        run: |
-          cat > .config <<'EOF'
-          CONFIG_ALL=n
-          CONFIG_ALL_KMODS=n
-          CONFIG_ALL_NONSHARED=n
-          CONFIG_AUTOREMOVE=n
-          CONFIG_PACKAGE_luci-theme-c2=m
-          EOF
-          sed -i 's/^[[:space:]]*//' .config
-          make defconfig
-
-      - name: Compile
-        working-directory: sdk
-        run: make package/luci-theme-c2/compile -j"$(nproc)" V=s
+          sdk_base_url: https://downloads.openwrt.org/releases/23.05.5/targets/x86/64
+          sdk_pattern: openwrt-sdk-23.05.5-x86-64_.*Linux-x86_64\.tar\.(xz|zst)
+          version: ${{ steps.version.outputs.version }}
 
       - name: Build opkg feed index
         run: |
@@ -178,88 +102,12 @@ jobs:
           printf '%s' "${version}" | grep -Eq '^[0-9][0-9A-Za-z._~+-]*$' || version="0.0.0"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
-      - name: Install build dependencies
-        run: |
-          sudo -E apt-get update
-          sudo -E apt-get install -y --no-install-recommends \
-            build-essential bison curl file flex gawk gettext git \
-            libncurses-dev libssl-dev python3 python3-setuptools python3-venv \
-            rsync unzip wget xz-utils zlib1g-dev zstd
-
-      - name: Resolve OpenWrt SDK
-        id: sdk
-        env:
-          SDK_BASE_URL: https://downloads.openwrt.org/snapshots/targets/x86/64
-          SDK_PATTERN: openwrt-sdk-x86-64_.*Linux-x86_64\.tar\.zst
-        run: |
-          line="$(curl -fsSL "${SDK_BASE_URL}/sha256sums" | grep -E "[[:space:]]+\*?${SDK_PATTERN}$" | head -n1)"
-          if [ -z "${line}" ]; then
-            echo "::error::No SDK matching '${SDK_PATTERN}' at ${SDK_BASE_URL}."
-            exit 1
-          fi
-          file="$(printf '%s\n' "${line}" | awk '{print $2}' | sed 's/^\*//')"
-          sha="$(printf '%s\n' "${line}" | awk '{print $1}')"
-          echo "file=${file}" >> "${GITHUB_OUTPUT}"
-          echo "sha=${sha}" >> "${GITHUB_OUTPUT}"
-          echo "cache_key=openwrt-sdk-apk-${sha}" >> "${GITHUB_OUTPUT}"
-
-      - name: Cache SDK archive
-        uses: actions/cache@v4
+      - name: Build package (snapshot)
+        uses: ./.github/actions/build-package
         with:
-          path: .cache/openwrt-sdk/${{ steps.sdk.outputs.file }}
-          key: ${{ steps.sdk.outputs.cache_key }}
-
-      - name: Download and extract SDK
-        env:
-          SDK_FILE: ${{ steps.sdk.outputs.file }}
-          SDK_SHA: ${{ steps.sdk.outputs.sha }}
-        run: |
-          mkdir -p .cache/openwrt-sdk sdk
-          if [ ! -f ".cache/openwrt-sdk/${SDK_FILE}" ]; then
-            curl -fL "https://downloads.openwrt.org/snapshots/targets/x86/64/${SDK_FILE}" \
-              -o ".cache/openwrt-sdk/${SDK_FILE}"
-          fi
-          printf '%s  %s\n' "${SDK_SHA}" ".cache/openwrt-sdk/${SDK_FILE}" | sha256sum -c -
-          case "${SDK_FILE}" in
-            *.tar.zst) tar --zstd -xf ".cache/openwrt-sdk/${SDK_FILE}" -C sdk --strip-components=1 ;;
-            *.tar.xz)  tar -xJf  ".cache/openwrt-sdk/${SDK_FILE}" -C sdk --strip-components=1 ;;
-            *) echo "::error::Unsupported SDK archive: ${SDK_FILE}"; exit 1 ;;
-          esac
-
-      - name: Prepare OpenWrt feeds
-        working-directory: sdk
-        run: |
-          cp feeds.conf.default feeds.conf
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
-      - name: Stage this package
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          mkdir -p sdk/package
-          rsync -a --delete \
-            --exclude='.git' --exclude='sdk' --exclude='llm' --exclude='preview' \
-            ./ sdk/package/luci-theme-c2/
-          sed -i -E "s/^(PKG_VERSION):=.*/\1:=${VERSION}/" sdk/package/luci-theme-c2/Makefile
-          sed -i -E "s/^(PKG_RELEASE):=.*/\1:=1/" sdk/package/luci-theme-c2/Makefile
-
-      - name: Configure
-        working-directory: sdk
-        run: |
-          cat > .config <<'EOF'
-          CONFIG_ALL=n
-          CONFIG_ALL_KMODS=n
-          CONFIG_ALL_NONSHARED=n
-          CONFIG_AUTOREMOVE=n
-          CONFIG_PACKAGE_luci-theme-c2=m
-          EOF
-          sed -i 's/^[[:space:]]*//' .config
-          make defconfig
-
-      - name: Compile
-        working-directory: sdk
-        run: make package/luci-theme-c2/compile -j"$(nproc)" V=s
+          sdk_base_url: https://downloads.openwrt.org/snapshots/targets/x86/64
+          sdk_pattern: openwrt-sdk-x86-64_.*Linux-x86_64\.tar\.zst
+          version: ${{ steps.version.outputs.version }}
 
       - name: Collect apk
         run: |
