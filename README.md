@@ -47,28 +47,31 @@ Use the matching section below.
 #### A1. From the GitHub package feed (recommended)
 
 Every `v*` tag triggers `.github/workflows/release.yml`, which builds the architecture-independent
-(`all`) `.ipk` and publishes an opkg feed — `Packages`, `Packages.gz` and the `.ipk` — on the GitHub
-release. Add that release URL as a custom feed and use plain opkg:
+(`all`) `.ipk` and publishes a **signed** opkg feed — `Packages`, `Packages.gz`, `Packages.sig`, the
+`.ipk`, and the feed's public key — on the GitHub release.
 
-```sh
-# 1. add the feed (always tracks the newest release)
-echo 'src/gz luci_c2 https://github.com/its0din-ai/luci-c2/releases/latest/download' >> /etc/opkg/customfeeds.conf
+1. **Trust the feed's signing key** (one-time). The release attaches the public key as an asset named
+   by its 16-hex fingerprint. Install it into opkg's keyring so `check_signature` can stay enabled:
 
-# 2. refresh indexes
-opkg update
+   ```sh
+   # the asset name is the 16-hex key id shown in the release assets
+   KEY_ID=<key-id-from-the-release-assets>
+   wget -O "/etc/opkg/keys/${KEY_ID}" \
+     "https://github.com/its0din-ai/luci-c2/releases/latest/download/${KEY_ID}"
+   ```
 
-# 3. install (later: `opkg upgrade luci-theme-c2`)
-opkg install luci-theme-c2
-```
+2. **Add the feed and install**:
 
-OpenWrt enables opkg signature checking for its official feeds (`option check_signature` in
-`/etc/opkg.conf`). This third-party feed is **unsigned**, so if `opkg update` reports a signature error
-for `luci_c2`, disable signature checking:
+   ```sh
+   # always tracks the newest release
+   echo 'src/gz luci_c2 https://github.com/its0din-ai/luci-c2/releases/latest/download' >> /etc/opkg/customfeeds.conf
+   opkg update
+   opkg install luci-theme-c2   # later: opkg upgrade luci-theme-c2
+   ```
 
-```sh
-sed -i 's/^option check_signature/# option check_signature/' /etc/opkg.conf
-opkg update
-```
+With the key trusted, no change to `/etc/opkg.conf` is needed. If you would rather not trust the key,
+you can instead disable opkg signature checking (`option check_signature` in `/etc/opkg.conf`), but
+installing the key is the intended path.
 
 #### A2. From a local `.ipk`
 
@@ -127,6 +130,25 @@ Output lands in `bin/packages/<arch>/luci/`:
 The buildroot selects the package manager via the `CONFIG_USE_APK` option; the same source builds an
 `.ipk` or an `.apk` accordingly. To ship the theme inside a firmware image instead, enable it under
 `LuCI → Themes → luci-theme-c2` in `make menuconfig`.
+
+## Signing the feed (maintainers)
+
+The opkg feed is signed with `usign` so users can leave `check_signature` enabled. One-time setup:
+
+1. Generate a keypair with `usign` (any OpenWrt buildroot, or a host `usign` binary):
+
+   ```sh
+   usign -G -s opkg-private.key -p opkg-public.key
+   usign -F -p opkg-public.key    # prints the 16-hex key id
+   ```
+
+2. Commit the **public** key to `.github/opkg-public.key`.
+3. Add the **private** key file's contents as the repository secret `USIGN_PRIVATE_KEY`
+   (Settings → Secrets and variables → Actions → New repository secret). Never commit the private key.
+4. Tell users the key id so they can install it (see Option A1).
+
+The release job writes the secret to a temp file, verifies the public and secret fingerprints match,
+signs `Packages` into `Packages.sig`, and attaches the public key to the release under its key id.
 
 ## Select the theme
 

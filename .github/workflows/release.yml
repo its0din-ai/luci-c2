@@ -77,6 +77,39 @@ jobs:
           echo "--- Packages ---"
           cat Packages
 
+      - name: Sign opkg feed index
+        env:
+          USIGN_PRIVATE_KEY: ${{ secrets.USIGN_PRIVATE_KEY }}
+        run: |
+          usign="$PWD/sdk/staging_dir/host/bin/usign"
+          if [ ! -x "${usign}" ]; then
+            echo "::error::usign not found in the SDK at ${usign}."
+            exit 1
+          fi
+          if [ ! -f .github/opkg-public.key ]; then
+            echo "::error::Missing public key .github/opkg-public.key (see README: Signing the feed)."
+            exit 1
+          fi
+          if [ -z "${USIGN_PRIVATE_KEY}" ]; then
+            echo "::error::Secret USIGN_PRIVATE_KEY is not set (see README: Signing the feed)."
+            exit 1
+          fi
+          key_file="$PWD/usign.key"
+          printf '%s\n' "${USIGN_PRIVATE_KEY}" > "${key_file}"
+          chmod 600 "${key_file}"
+          pub_id="$("${usign}" -F -p .github/opkg-public.key)"
+          sec_id="$("${usign}" -F -s "${key_file}")"
+          if [ "${pub_id}" != "${sec_id}" ]; then
+            echo "::error::Public key id (${pub_id}) does not match secret key id (${sec_id})."
+            rm -f "${key_file}"
+            exit 1
+          fi
+          ( cd feed && "${usign}" -S -m Packages -s "${key_file}" -x Packages.sig )
+          cp .github/opkg-public.key "feed/${pub_id}"
+          rm -f "${key_file}"
+          echo "Signed feed with key ${pub_id}"
+          ls -l feed
+
       - name: Upload feed artifact
         uses: actions/upload-artifact@v4
         with:
